@@ -40,13 +40,13 @@ npx tailwindcss init -p
 ```
 
 作成された、tailwind.config.jsのcontent内に、以下を追記。
-```
-content: [
-  './pages/**/*.{js,ts,jsx,tsx,mdx}',
-  './components/**/*.{js,ts,jsx,tsx,mdx}',
-  './app/**/*.{js,ts,jsx,tsx,mdx}',
-],
-```
+  ```
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  ```
 
 globals.cssに以下を追記
 ```
