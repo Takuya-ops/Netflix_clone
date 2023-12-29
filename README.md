@@ -54,3 +54,10 @@ globals.cssに以下を追記
 @tailwind components;
 @tailwind utilities;
 ```
+
+画像はこのパスに保存しておく（AWSを使用するならS3に入れておくのがベター）
+public/images
+
+'use client'
+これをpage.tsxの１行目に書いて置く必要がある。
+そうしないと、useState使用時にエラーが発生する。
