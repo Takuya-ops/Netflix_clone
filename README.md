@@ -346,3 +346,25 @@ pages > auth.tsファイルを編集する。
 === は厳密等価演算子。型と値が等しい場合のみTrueとなる。
 
 pages > api > register.tsファイルを作成
+name, email, passwordがpostされた時の処理を書く。
+
+※ 422エラーは、すでに登録済みのユーザーが再度アカウント登録を行おうとした時などに返されるエラー。
+
+auth.tsxに作成した、api/registerにpostする処理を書く、
+```typescript:auth.tsx
+  const register = useCallback(async () => {
+    try {
+      await axios.post('/api/register', {
+        email,
+        name,
+        password
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [email, name, password]);
+```
+
+localhost:3000のアプリ画面で、適当に情報を入力し、Sign Upを押下。
+デベロッパーツールで情報が送られたか確認。
+→ 成功していれば、MongoDBのUserに入力した情報が入っている。
