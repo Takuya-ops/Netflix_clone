@@ -240,3 +240,109 @@ Applying the following changes:
 
 ✔ Generated Prisma Client (v5.7.1) to ./node_modules/@prisma/client in 78ms
 ```
+
+pages > api > [...nextauth].tsを作成。
+
+以下のコマンドを実施。
+
+ログイン時のパスワードの認証を行う際に使用するもの。
+```
+npm install next-auth
+
+npm install bcrypt
+```
+
+[...nextauth].tsファイルに以下を追記
+```typescript:[...nextauth].ts
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import prismadb from '@/lib/prismadb';
+import { compare } from 'bcrypt';
+
+export default NextAuth({
+  providers: [
+    Credentials({
+      id: 'credentials',
+      name: 'Credentials',
+      credentials: {
+        email: {
+          label: 'Email',
+          type: 'text',
+        },
+        password: {
+          label: 'Password',
+          type: 'password',
+        }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Email and password required');
+        }
+
+        const user = await prismadb.user.findUnique({
+          where: {
+            email: credentials.email
+          }
+        });
+
+        if (!user || !user.hashedPassword) {
+          throw new Error('Email does not exist')
+        }
+        const isCorrectPassword = await compare(
+          credentials.password,
+          user.hashedPassword
+        );
+
+        if (!isCorrectPassword) {
+          throw new Error('Incorrect password')
+        }
+        return user;
+      }
+    })
+  ],
+  pages: {
+    signIn: '/auth',
+  },
+  debug: process.env.NODE_ENV === 'development',
+  session: {
+    strategy:'jwt'
+  },
+  jwt: {
+    secret: process.env.NEXTAUTH_JWT_SECRET,
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+})
+```
+
+.envファイルに以下を追記
+```.env
+NEXTAUTH_JWT_SECRET = "NEXT-JWT-SECRET"
+NEXTAUTH_SECRET = "NEXT-SECRET"
+```
+
+ターミナルで以下のコマンドを実施
+```
+npm i -D @types/bcrypt
+
+npm i axios
+```
+
+pages > auth.tsファイルを編集する。
+以下の記述を追加
+```typescript:auth.tsx
+  const register = useCallback(async () => {
+    try {
+      await axios.post('/api/register', {
+        email,
+        name,
+        password
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+```
+
+=== は厳密等価演算子。型と値が等しい場合のみTrueとなる。
+
+pages > api > register.tsファイルを作成

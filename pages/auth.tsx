@@ -1,5 +1,6 @@
+import axios from "axios"
 import { useCallback, useState } from "react";
-import Input from "./Input";
+import Input from "../components/Input";
 
 const Auth = () => {
   const [name, setName] = useState('')
@@ -11,8 +12,19 @@ const Auth = () => {
   // 初期状態(loginがTrueの時)は登録画面、create acountのボタンが押されたらlogin画面に変わる。今回だと、このtoggleVariantを、buttonタグのonclickと紐づけている。
   const toggleVariant = useCallback(() => {
     setVariant((currentVariant) => currentVariant === 'login' ? 'register' : 'login')
-    // setVariant((currentVariant) => currentVariant === 'login' ? 'login' : 'register')
   }, [])
+
+  const register = useCallback(async () => {
+    try {
+      await axios.post('/api/register', {
+        email,
+        name,
+        password
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
 
   return (
     <div className="relative h-full w-full bg-[url('/images/image1.png')] bg-no-repeat  bg-fixed bg-cover">
