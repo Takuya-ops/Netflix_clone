@@ -407,7 +407,7 @@ const router = useRouter()
 ※ npm run devで以下のようなエラーが発生する場合は、index.tsxの１行目に'use client'を記述すると直る。
  ⚠ Fast Refresh had to perform a full reload.
 
-ターミナルで以下のコマンドを実行
+ターミナルで以下のコマンドを実行。
 ```
 npm install react-icons
 ```
