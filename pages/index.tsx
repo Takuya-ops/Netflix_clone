@@ -4,7 +4,8 @@ import Auth from "./auth";
 export default function Home() {
   return (
     <>
-      <Auth/>
+      <h1 className="text-white">Hello</h1>
+      {/* <Auth/> */}
     </>
   )
 }

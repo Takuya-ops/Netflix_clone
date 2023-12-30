@@ -1,8 +1,11 @@
 import axios from "axios"
 import { useCallback, useState } from "react";
 import Input from "../components/Input";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/router";
 
 const Auth = () => {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,6 +17,27 @@ const Auth = () => {
     setVariant((currentVariant) => currentVariant === 'login' ? 'register' : 'login')
   }, [])
 
+  const login = useCallback(async () => {
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: '/'
+      });
+      // ログイン成功時にリダイレクトする画面
+      // router.push('/')
+      if (result && result.error === null) {
+      router.push('/');
+      } else {
+        // エラーメッセージを表示またはログを出力
+        console.log(result?.error);
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }, [email, password, router])
+
   const register = useCallback(async () => {
     try {
       await axios.post('/api/register', {
@@ -21,6 +45,7 @@ const Auth = () => {
         name,
         password
       });
+      login()
     } catch (error) {
       console.log(error);
     }
@@ -70,14 +95,14 @@ const Auth = () => {
                 value={password}
               />
               </div>
-              <button onClick={register} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
+              <button onClick={variant === 'login' ? login : register} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
                 {variant === 'login' ? 'Login' : 'Sign Up'}
               </button>
               <p className="text-neutral-500 mt-7">
                 {variant === 'login' ? 'First time using Netflix?' : 'Already have an account?'}
                 {/* このボタンを押したときに、アカウント作成、ログインの画面が切り替わるようにする */}
                 <span onClick={toggleVariant} className="text-white ml-1 hover:underline cursor-pointer">
-                  {variant === 'login' ? 'Create an account' : 'Sign In'}
+                  {variant === 'login' ? 'Create an account' : 'Login'}
                 </span>
               </p>
           </div>

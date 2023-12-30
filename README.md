@@ -368,3 +368,46 @@ auth.tsxに作成した、api/registerにpostする処理を書く、
 localhost:3000のアプリ画面で、適当に情報を入力し、Sign Upを押下。
 デベロッパーツールで情報が送られたか確認。
 → 成功していれば、MongoDBのUserに入力した情報が入っている。
+
+auth.tsxにログインの処理も追記する
+```
+  const login = useCallback(async () => {
+    try {
+      await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: '/'
+      });
+    } catch (error) {
+      console.log(error)
+    }
+  }, [email, password])
+```
+こちらも修正
+```
+<button onClick={variant === 'login' ? login : register} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
+  {variant === 'login' ? 'Login' : 'Sign Up'}
+</button>
+```
+
+Loginを押したあと、以下のエラーが出てしまう。
+```
+Error: This action with HTTP GET is not supported by NextAuth.js
+```
+
+これを解決するには、apiディレクトリ内にauthディレクトリを作成し、この中に[...nextauth].tsを入れる。
+http://localhost:3000/auth にアクセスし、ログイン情報を入力後、Loginボタンを押し、200番出レスポンスがあればOK。
+
+auth.tsxの、auth内に以下の記述を追加。
+```
+const router = useRouter()
+```
+
+※ npm run devで以下のようなエラーが発生する場合は、index.tsxの１行目に'use client'を記述すると直る。
+ ⚠ Fast Refresh had to perform a full reload.
+
+ターミナルで以下のコマンドを実行
+```
+npm install react-icons
+```
