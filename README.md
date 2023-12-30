@@ -61,3 +61,11 @@ public/images
 'use client'
 これをpage.tsxの１行目に書いて置く必要がある。
 そうしないと、useState使用時にエラーが発生する。
+
+ログイン画面と登録画面を切り替える際には、useCallbackを使用する。
+
+Prismaを使うとDB周りの処理を簡潔に書ける。
+```
+npm install -D prisma
+```
+※ -Dは開発中のみ使用するものをインストールする際に使用するオプション
