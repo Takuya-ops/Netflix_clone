@@ -411,3 +411,385 @@ const router = useRouter()
 ```
 npm install react-icons
 ```
+
+Githubとgoogleのアイコンをインポート
+```
+import {FcGoogle} from "react-icons/fc"
+import {FaGithub} from "react-icons/fa"
+```
+
+buttonタグの下に、GoogleとGithubのアイコンを挿入する。
+
+react-iconsで提供されているアイコン
+（例）FcGoogleなどFc（FontAwesome Colors）がついているものはカラーが付いているアイコン。
+その他の多くのアイコン、Fa（FontAwesome）、Ai（Ant Design Icons）、Io（Ionicons）、Si（Simple Icons）などはデフォルトで色がついていないので自分で指定する必要がある。
+
+例
+```typescript:auth.tsx
+<FaInstagram style={{ color: "#C13584" }} /> // Instagramの場合
+<FaTwitter style={{ color: "#1DA1F2" }} /> // Twitterの場合
+<AiFillFacebook style={{ color: "#4267B2" }} /> // Facebookの場合
+<SiLinkedin style={{ color: "#0077B5" }} /> // LinkedInの場合
+```
+
+.envに以下を追記（登録時の認証に使用する外部SNSの情報）
+```
+GITHUB_ID=
+GITHUB_SECRET=
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+TWITTER_ID=
+TWITTER_SECRET=
+
+LINKEDIN_ID=
+LINKEDIN_SECRET=
+
+FACEBOOK_ID=
+FACEBOOK_SECRET=
+```
+
+ここで登録する情報
+- Github
+GithubのDeveloper SettingsからOAuth AppsのRegister New Applicationをクリック。
+https://github.com/settings/developers
+必要情報を入力
+Application name：任意の名前
+Homepage URL：http://localhost:3000
+Authorization callback URL：http://localhost:3000
+Register Applicationを押すとClientIDが発行される → これを.envファイルに指定する。
+その画面にgenerat client secretのボタンがあるので、ここをクリックするとclient secretも取得できる。 → .envファイルに指定
+auth.tsxファイルの、githubのアイコンを作っている箇所に、onClick部分を追加する。
+```typescript:auth.tsx
+<div
+  // この１行を追加
+  onClick={() => signIn('github', {callbackUrl: '/'})}
+  className="
+    w-12
+    h-12
+    bg-white
+    rounded-full
+    flex
+    items-center
+    justify-center
+    cursor-pointer
+    hover:opacity-70
+    transition
+  "
+>
+  <FaGithub size="24px"/>
+</div>
+```
+
+- Google
+- Twitter
+- Linkedin
+- Facebook
+
+pages > api > auth > [...nextauth].ts で .envで指定した認証情報を読み込む（provider部分に追記）
+```typescript:[...nextauth].ts
+providers: [
+    GithubProvider({
+      clientId: process.env.GITHUB_ID || '',
+      clientSecret: process.env.GITHUB_SECRET || ''
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
+    }),
+    TwitterProvider({
+      clientId: process.env.TWITTER_ID || '',
+      clientSecret: process.env.TWITTER_SECRET || ''
+    }),
+    LinkedinProvider({
+      clientId: process.env.LINKEDIN_ID || '',
+      clientSecret: process.env.LINKEDIN_SECRET || ''
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_ID || '',
+      clientSecret: process.env.FACEBOOK_SECRET || ''
+    }),
+```
+
+ターミナルで以下のコマンドを実行
+```
+npm install @next-auth/prisma-adapter
+```
+
+インストールした以下のパッケージを追加
+```typescript:[...nextauth].ts
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
+debugの記述があるところあたりに、adapterを追記
+```typescript:[...nextauth].ts
+debug: process.env.NODE_ENV === 'development',
+adapter: PrismaAdapter(prismadb),
+```
+
+githubの認証後、エラーページが表示される。
+ログでsession_stateがschema.prismaのAccountでしてないためといった内容が出力されたが、記述しているので原因不明。実装は保留とする。
+```
+ +   session_state: String
+ Argument `session_state` is missing.
+ ```
+
+ googleログイン
+ google cloudを開く。
+ https://console.cloud.google.com/
+ プロジェクトの選択から、新しいプロジェクトをクリック。
+ ```
+ プロジェクト名："任意の名前"
+ 場所："組織なし"
+```
+ 作成を押す。
+
+ 検索窓から、API & servicesを検索。
+ サイドバーのOAuth同意画面をクリックし、Externalを選択。
+ 作成を押す。
+
+以下の必須入力項目を入力。
+```
+アプリ名
+ユーザーサポートメール
+メールアドレスを登録
+```
+保存して次へ
+
+保存して次をクリック
+最後まで（２つ目以降の項目は入力の必要はない。）
+
+サイドバーの認証情報を選択。
+上部の認証情報を作成からOAuthClientIDを選択し、アプリケーションの種類を入力する。（今回はWebアプリケーション）
+名前は、とりあえずこのままでOK
+承認済みのリダイレクト URIの項目に以下を入力
+```
+http://localhost:3000/api/auth/callback/google
+```
+※ これを入力しないと、フロントエンドのgoogleアイコンをクリックした時、400番エラ-となるので注意。
+
+作成をクリックすると、IDとSECRETが発行される。（設定が完了されるまで５分程度かかる場合がある。）
+
+githubの時と同じ要領で以下をgoogle アイコン部分のdivタグに追加する。
+```typescript:auth.tsx
+onClick={() => signIn('google', {callbackUrl: '/'})}
+```
+
+Gアカウントについても、githubと同じエラーが発生する。
+以下のようなエラーがフロントエンドで表示される...
+```
+missing required error components, refreshing...
+```
+やはり、Prismaのschemaに関する入力間違い？
+MongoDBにもデータが登録されていない。
+こちらも、ひとまずスキップ。
+
+やはりschema.prismaの記述がおかしかったよう。
+修正版↓
+```prisma:schema.prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["mongoDb"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  image          String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  hashedPassword String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  sessions       Session[]
+  accounts       Account[]
+  favoriteIds    String[]  @db.ObjectId
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Movie {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String
+  videoUrl     String
+  thumbnailUrl String
+  genre        String
+  duration     String
+}
+```
+
+npx prisma db push も忘れずに。
+
+libディレクトリに、serverAuth.ts を作成し、以下を記述。
+```typescript:serverAuth.ts
+import { NextApiRequest } from "next";
+import { getSession } from "next-auth/react";
+
+import prismadb from '@/lib/prismadb';
+
+const serverAuth = async (req: NextApiRequest) => {
+  const session = await getSession({req});
+
+  if (!session?.user?.email) {
+    throw new Error('Not signed in')
+  }
+
+  const currentUser = await prismadb.user.findUnique({
+    where: {
+      email: session.user.email,
+    }
+  });
+
+  if (!currentUser) {
+    throw new Error('Not signed in')
+  }
+
+  return { currentUser }
+}
+
+export default serverAuth;
+```
+
+apiディレクトリ内に、current.ts を作成し、以下を記述。
+```typescript:current.ts
+import { NextApiRequest, NextApiResponse } from "next";
+import serverAuth from "@/lib/serverAuth";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).end()
+  }
+
+  try {
+    const {currentUser} = await serverAuth(req)
+    return res.status(200).json(currentUser)
+  } catch (error) {
+    console.log(error)
+    return res.status(400).end()
+  }
+}
+```
+
+libディレクトリ内に、fetcher.ts を作成し、以下を記述。
+```typescript:fetcher.ts
+ import axios from 'axios'
+
+ const fetcher = (url : string) => axios.get(url).then((res) => res.data)
+
+ export default fetcher;
+```
+
+ターミナルで以下のコマンドを実行
+```
+npm install swr
+```
+
+プロジェクトディレクトリ配下にhooksディレクトリを作成し、その中に useCurrentUser.ts を作成する。
+```typescript:useCurrentUser.ts
+import useSWR from "swr";
+import fetcher from "@/lib/fetcher";
+
+const useCurrentUser = () => {
+  const { data, error, isLoading, mutate } = useSWR('/api/current', fetcher)
+  
+  return {
+    data,
+    error,
+    isLoading,
+    mutate
+  }
+};
+
+export default useCurrentUser;
+```
+
+index.tsxを以下のように修正する。
+サインアウト機能、ログインユーザーの表示など。
+
+```ts:index.tsx
+import { getSession, signOut } from "next-auth/react";
+import Auth from "./auth";
+import { NextPageContext } from "next";
+import useCurrentUser from "@/hooks/useCurrentUser";
+
+export async function getServerSideProps(context: NextPageContext) {
+  const session = await getSession(context)
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: 'auth',
+        // 一時的なリダイレクト（ログイン認証など）
+        permanent: false
+      }
+    }
+  }
+  return {
+    props: {}
+  }
+}
+
+export default function Home() {
+  const {data: user} = useCurrentUser();
+  
+  return (
+    <>
+      <h1 className="text-4xl text-green-500">NetFlix Clone</h1>
+      // ログインしたユーザーを表示させる
+      <p className="text-white">Logged in as : {user?.name}</p>
+      {/* ログアウトボタンの追加 */}
+      <button className="h-10 w-full bg-white" onClick={() => signOut()}>Logout</button>
+    </p>
+  )
+}
+```
+
+mongoDBのAtlasを開く。
+サイドバーのSECURITY内の、Network Accessを選択し、IP Access Listのタブの ADD IP ADDRESSを選択する。
+ALLOW ACCESS FROM ANYWHEREをクリック（Access ListAccess List Entryに、0.0.0.0/0 が入る）
+Confirmを押す。
+
+pagesディレクトリ内に、profiles.tsx を作成する。

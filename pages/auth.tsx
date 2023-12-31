@@ -3,6 +3,11 @@ import { useCallback, useState } from "react";
 import Input from "../components/Input";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
+// Google, Githubでログインする時の画像アイコンをインポート
+import {FcGoogle} from "react-icons/fc"
+import {FaGithub, FaTwitter} from "react-icons/fa"
+import { AiFillFacebook } from "react-icons/ai";
+import { SiLinkedin } from "react-icons/si";
 
 const Auth = () => {
   const router = useRouter()
@@ -98,6 +103,92 @@ const Auth = () => {
               <button onClick={variant === 'login' ? login : register} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
                 {variant === 'login' ? 'Login' : 'Sign Up'}
               </button>
+              {/* github、googleでの登録用のスペース */}
+              <div className="flex flex-row items-center gap-4 mt-8 justify-center">
+                {/* 白い丸型を作り、その中にアイコンを表示させる */}
+                <div
+                  onClick={() => signIn('google', {callbackUrl: '/'})}
+                  className="
+                    w-12
+                    h-12
+                    bg-white
+                    rounded-full
+                    flex
+                    items-center
+                    justify-center
+                    cursor-pointer
+                    hover:opacity-70
+                    transition
+                  "
+                >
+                  <FcGoogle size="24px"/>
+                </div>
+                <div
+                  onClick={() => signIn('github', {callbackUrl: '/'})}
+                  className="
+                    w-12
+                    h-12
+                    bg-white
+                    rounded-full
+                    flex
+                    items-center
+                    justify-center
+                    cursor-pointer
+                    hover:opacity-70
+                    transition
+                  "
+                >
+                  <FaGithub size="24px"/>
+                </div>
+                <div 
+                  className="
+                    w-12
+                    h-12
+                    bg-white
+                    rounded-full
+                    flex
+                    items-center
+                    justify-center
+                    cursor-pointer
+                    hover:opacity-70
+                    transition
+                  "
+                >
+                  <AiFillFacebook size="24px" style={{ color: "#4267B2" }}/>
+                </div>
+                <div 
+                  className="
+                    w-12
+                    h-12
+                    bg-white
+                    rounded-full
+                    flex
+                    items-center
+                    justify-center
+                    cursor-pointer
+                    hover:opacity-70
+                    transition
+                  "
+                >
+                  <FaTwitter size="24px" style={{ color: "#1DA1F2" }}/>
+                </div>
+                <div 
+                  className="
+                    w-12
+                    h-12
+                    bg-white
+                    rounded-full
+                    flex
+                    items-center
+                    justify-center
+                    cursor-pointer
+                    hover:opacity-70
+                    transition
+                  "
+                >
+                  <SiLinkedin size="24px" style={{ color: "#0077B5" }}/>
+                </div>
+              </div>
               <p className="text-neutral-500 mt-7">
                 {variant === 'login' ? 'First time using Netflix?' : 'Already have an account?'}
                 {/* このボタンを押したときに、アカウント作成、ログインの画面が切り替わるようにする */}

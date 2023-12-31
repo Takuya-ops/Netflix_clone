@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["mongoDb"]
 }
 
 datasource db {
@@ -19,23 +20,14 @@ model User {
   hashedPassword String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  favoriteIds    String[]  @db.ObjectId
   sessions       Session[]
   accounts       Account[]
-}
-
-model Session {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  User         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String?  @db.ObjectId
-  sessionToken String   @unique
-  expires      DateTime
+  favoriteIds    String[]  @db.ObjectId
 }
 
 model Account {
   id                String  @id @default(auto()) @map("_id") @db.ObjectId
-  User              User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId            String? @db.ObjectId
+  userId            String  @db.ObjectId
   type              String
   provider          String
   providerAccountId String
@@ -45,9 +37,19 @@ model Account {
   token_type        String?
   scope             String?
   id_token          String? @db.String
-  session_state     String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
