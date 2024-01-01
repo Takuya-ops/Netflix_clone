@@ -792,4 +792,133 @@ mongoDBのAtlasを開く。
 ALLOW ACCESS FROM ANYWHEREをクリック（Access ListAccess List Entryに、0.0.0.0/0 が入る）
 Confirmを押す。
 
-pagesディレクトリ内に、profiles.tsx を作成する。
+pagesディレクトリ内に、profiles.tsx を作成する。(以下のように記述)
+※ アクセス時のパスはファイル名になる
+例）http://localhost:3000/profiles でアクセスすると表示される。
+```typescript:profiles.tsx
+import { NextPageContext } from "next";
+import { getSession } from "next-auth/react";
+
+export async function getServerSideProps(context: NextPageContext) {
+  // getSession内に { req: context.req }がないと、ログイン後も /authにリダイレクトされてしまうので注意
+  const session = await getSession({ req: context.req })
+
+  // 未認証の場合は登録画面にリダイレクトする
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/auth',
+        permanent: false,
+      }
+    }
+  }
+  return {
+    props: {}
+  }
+}
+
+const Profiles = () => {
+  return (
+  <>
+    <div>
+      <p className="text-white text-4xl">Profiles</p>
+    </div>
+  </>
+  )
+}
+
+export default Profiles;
+```
+
+※ たまに、npm run devができなくなる。
+以下のようにすると、とりあえずは直る（またしばらく経つと発生するが、、）
+```terminal:terminal
+npm install
+npx prisma generate
+npm install @prisma/client
+npm run dev
+```
+
+auth.tsxのrouterに関する記述を消す。
+リダイレクト(callbackUrl)先を '/profiles'に変更する。
+github, googleも同様に'/profiles'に変更。
+
+左右の中間にテキストを配置するには、text-centerで事足りるが、上下の中間に表示されるには、親のdivタグを作成し、その中に、flex justify-center items-center h-screen などを記述してやる必要がある。
+縦に並べたいものはその要素の親タグに、flex-col を指定。
+mb-4（マージンボトム）
+
+groupがhoverした時のトリガー（親タグと子タグを関連付ける）
+```ts:profiles.tsx
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { NextPageContext } from "next";
+import { getSession } from "next-auth/react";
+import { useRouter } from "next/router";
+
+export async function getServerSideProps(context: NextPageContext) {
+  // const session = await getSession()
+  const session = await getSession({ req: context.req })
+
+
+  // 未認証の場合は登録画面にリダイレクトする
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/auth',
+        permanent: false,
+      }
+    }
+  }
+  return {
+    props: {}
+  }
+}
+
+const Profiles = () => {
+  const router = useRouter()
+  const { data:user } = useCurrentUser()
+  return (
+  <>
+    <div className="flex flex-col justify-center items-center h-screen">
+      <h1 className="text-white text-4xl mb-10">Who is watching?</h1>
+        <div onClick={() => router.push('/')}>
+          {/* 画像用 */}
+          <div className="group">
+            <div className="
+              w-40
+              h-40
+              // 角を丸くする
+              // rounded-md
+              rounded-sm
+              border-2
+              border-transparent
+              group-hover:cursor-pointer
+            group-hover:border-red-400
+            ">
+              {/* alt属性には画像を説明する簡潔なテキストを入れる（画像を読み込めなかった場合、このテキストが表示される） */}
+              <img src="images/face.png" alt="user image"></img>
+            </div>
+            {/* 名前用 */}
+            <div className="
+              text-gray-300
+              mt-2
+              text-center
+              group-hover:text-white
+            ">
+              {user?.name}
+            </div>
+          </div>
+        </div>
+    </div>
+  </>
+  )
+}
+
+export default Profiles;
+```
+
+ページ遷移させたい時（useRouterを使用）
+```
+import { useRouter } from "next/router";
+const router = useRouter()
+<div onClick={() => router.push('/')}>
+```

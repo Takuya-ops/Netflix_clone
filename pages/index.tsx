@@ -3,6 +3,7 @@ import { getSession, signOut } from "next-auth/react";
 // import Auth from "./auth";
 import { NextPageContext } from "next";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import NavBar from "@/components/NavBar";
 
 export async function getServerSideProps(context: NextPageContext) {
   const session = await getSession(context)
@@ -25,6 +26,7 @@ export default function Home() {
   const { data: user } = useCurrentUser()
   return (
     <>
+      <NavBar/>
       <h1 className="text-4xl text-green-500">NetFlix Clone</h1>
       {/* ログインしたユーザーを表示させる */}
       <p className="text-white">Logged in as : {user?.name}</p>

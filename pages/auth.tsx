@@ -2,7 +2,6 @@ import axios from "axios"
 import { useCallback, useState } from "react";
 import Input from "../components/Input";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/router";
 // Google, Githubでログインする時の画像アイコンをインポート
 import {FcGoogle} from "react-icons/fc"
 import {FaGithub, FaTwitter} from "react-icons/fa"
@@ -10,7 +9,6 @@ import { AiFillFacebook } from "react-icons/ai";
 import { SiLinkedin } from "react-icons/si";
 
 const Auth = () => {
-  const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,21 +25,22 @@ const Auth = () => {
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: false,
-        callbackUrl: '/'
+        // redirect: false,
+         // ログイン成功時にリダイレクトする画面
+        callbackUrl: '/profiles'
       });
       // ログイン成功時にリダイレクトする画面
       // router.push('/')
-      if (result && result.error === null) {
-      router.push('/');
-      } else {
+      // if (result && result.error === null) {
+      // router.push('/');
+      // } else {
         // エラーメッセージを表示またはログを出力
-        console.log(result?.error);
-      }
+      //   console.log(result?.error);
+      // }
     } catch (error) {
       console.log(error)
     }
-  }, [email, password, router])
+  }, [email, password])
 
   const register = useCallback(async () => {
     try {
@@ -107,7 +106,7 @@ const Auth = () => {
               <div className="flex flex-row items-center gap-4 mt-8 justify-center">
                 {/* 白い丸型を作り、その中にアイコンを表示させる */}
                 <div
-                  onClick={() => signIn('google', {callbackUrl: '/'})}
+                  onClick={() => signIn('google', {callbackUrl: '/profiles'})}
                   className="
                     w-12
                     h-12
@@ -124,7 +123,7 @@ const Auth = () => {
                   <FcGoogle size="24px"/>
                 </div>
                 <div
-                  onClick={() => signIn('github', {callbackUrl: '/'})}
+                  onClick={() => signIn('github', {callbackUrl: '/profiles'})}
                   className="
                     w-12
                     h-12
