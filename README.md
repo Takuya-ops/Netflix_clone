@@ -1051,3 +1051,54 @@ export default AccountMenu;
 ```
 
 MongoDBのMovieに仮データを挿入
+
+pages > api に random.ts ファイルを作成。
+```ts:random.ts
+import { NextApiRequest, NextApiResponse } from "next";
+
+import prismadb from '@/lib/prismadb'
+import serverAuth from "@/lib/serverAuth";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).end()
+  }
+  try {
+    await serverAuth(req)
+
+    const movieCount = await prismadb.movie.count();
+    const randomIndex = Math.floor(Math.random() * movieCount)
+
+    const randomMovies  = await prismadb.movie.findMany({
+      take: 1,
+      skip: randomIndex
+    });
+    return res.status(200).json(randomMovies[0])
+  } catch (error) {
+    console.log(error)
+    return res.status(400).end()
+  }
+}
+```
+
+hooksディレクトリの中に useBillboard.tsを作成する 
+SWR（Stale-While-Revalidate）というデータ取得戦略に基づくReact Hooksライブラリ。
+fetchの際に必要。
+```ts:useBillboard.ts
+import useSWR from "swr";
+import fetcher from "@/lib/fetcher";
+
+const useBillboard = () => {
+  const {data, error, isLoading} = useSWR('/api/random', fetcher, {
+    revalidateIfStale: false,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  })
+
+  return {
+    data,
+    error,
+    isLoading
+  }
+}
+```

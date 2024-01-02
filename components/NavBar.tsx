@@ -25,7 +25,12 @@ const NavBar = () => {
         setShowBackground(false)
       }
     }
-  })
+    window.addEventListener('scroll', handleScroll)
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    } 
+  }, [])
 
   // toggleは切り替えという意味
   const toggleAccountMenu = useCallback(() => {
