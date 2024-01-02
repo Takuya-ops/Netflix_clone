@@ -1,5 +1,5 @@
 // 'use client'
-import { getSession, signOut } from "next-auth/react";
+import { getSession } from "next-auth/react";
 // import Auth from "./auth";
 import { NextPageContext } from "next";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -27,12 +27,6 @@ export default function Home() {
   return (
     <>
       <NavBar/>
-      <h1 className="text-4xl text-green-500">NetFlix Clone</h1>
-      {/* ログインしたユーザーを表示させる */}
-      <p className="text-white">Logged in as : {user?.name}</p>
-      {/* ログアウトボタンの追加 */}
-      <button className="h-10 w-full bg-white" onClick={() => signOut()}>Logout</button>
-      {/* <Auth/> */}
     </>
   )
 }

@@ -922,3 +922,132 @@ import { useRouter } from "next/router";
 const router = useRouter()
 <div onClick={() => router.push('/')}>
 ```
+
+index.tsxのsignoutに関する記述を消す
+
+# ホーム画面の作成
+#### Navbar.tsxの作成
+componentsディレクトリ内に Navbar.tsxを作成する。
+```ts:NavBar.tsx
+const NavBar = () => {
+  return (
+    // z-40は前面に出すものを制御する
+    <nav className="text-white f-full fixed z-40">
+      <div className="
+        // 水平方向のパディング
+        px-4
+        // md:スクリーンのサイズが768px以上のときに適用されるようにする
+        md:px-16
+        垂直方向のパディング
+        py-6
+        flex
+        // 縦並びにする
+        flex-row
+        items-center
+        // 変更を滑らかにする（transitionとduration-500は併用する → transitionだけだと変化が分からない）
+        transition
+        // 500ミリ秒（0.5秒）かけて、変化するようにする
+        duration-500
+        // 50 から 900 の範囲で指定できる
+        bg-zinc-900
+        // 透過度（透けて見えるようになる）
+        bg-opacity-90
+      ">
+        {/* 画面幅が1024px以上で高さを20にする（lg:h-20） */}
+        <img className="h-20" src="/images/logo.png" alt="logo"></img>
+      </div>
+    </nav>
+  )
+}
+
+export default NavBar;
+```
+
+<nav>はナビゲーションリンクを意味的にグループ化するためのセマンティックなタグ。
+<div>は内容や機能の汎用的なコンテナとして使用され、特にスタイリングやレイアウトのためによく使われる。
+
+
+componentsディレクトリに、NavBarItem.tsxを作成
+```ts:NavBarItem.tsx
+import React from "react";
+
+interface NavBarItemProps {
+  label: string
+} 
+
+const NavBarItem: React.FC<NavBarItemProps> = ({label}) => {
+  return (
+    <div className="text-white cursor-pointer hover:text-gray-300 transition">
+      {label}
+    </div>
+  )
+}
+
+export default NavBarItem;
+```
+
+一定以下の画面サイズのときは、Browseを表示させる
+<div className="lg:hidden flex flex-row items-center gap-2 ml-8 cursor-pointer relative">
+  <p className="text-white text-sm">Browse</p>
+  <BsChevronDown className="text-white transition"/>
+  <MobileMenu/>
+</div>
+
+componentsディレクトリ内に、MobileMenu.tsxを作成する
+※ left-0を使用すると、要素が親の左端から開始することが保証される。
+```MobileMenu.tsx
+
+```
+
+※ テキストサイズの変更について
+テキストサイズは通常、text-xs, text-sm, text-base, text-lg, text-xl, text-2xl, text-3xl, ... など、text-{size}で指定できる。
+
+React は不変性の原則に従う。これは、状態を直接変更するのではなく、新しい状態を作成して更新。
+useStateの第一引数、第二引数が状態を更新用（set〇〇 のやつ）
+
+const MobileMenu: React.FC<MobileMenuProps> = ({visible}) => {
+
+ここの部分、visibleの記述は{}で囲むことを忘れない。
+({visible})
+こうしないと、対象のボタンを押しても画面が切り替わらないので注意。
+
+componentsディレクトリにAccountMenu.tsxを作成する。
+```ts:AccountMenu.tsx
+import { signOut } from "next-auth/react";
+import React from "react";
+
+interface AccountMenuProps {
+  visible?: boolean
+}
+
+const AccountMenu:React.FC<AccountMenuProps> = ({
+  visible
+}) => {
+
+  if (!visible) {
+    return null
+  }
+
+  return (
+    <div className="bg-black w-56 absolute top-14 right-0 py-5 flex-col border-2 border-gray-800 flex">
+      <div className="flex flex-col gap-3">
+        <div className="px-3 group/item flex flex-row gap-3 items-center w-full">
+          <img className="w-8 rounded-md" src="/images/face.png" alt=""></img>
+          <p className="text-white text-sm group-hover/item:underline">
+            username
+          </p>
+        </div>
+        {/* 下線を引く */}
+        <hr className="bg-gray-600 border-0 h-px my-4" />
+        <div onClick={() => signOut()} className="px-3 text-center text-white text-sm hover:underline">
+          Sign out of App
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default AccountMenu;
+```
+
+MongoDBのMovieに仮データを挿入
