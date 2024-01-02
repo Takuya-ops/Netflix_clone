@@ -1,3 +1,4 @@
+// ホーム画面で再生しておくMovieをランダムで取得する
 import { NextApiRequest, NextApiResponse } from "next";
 
 import prismadb from '@/lib/prismadb'

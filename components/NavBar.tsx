@@ -40,7 +40,8 @@ const NavBar = () => {
   return (
     // z-40は前面に出すものを制御する
     <nav className="flex text-white w-full fixed z-40">
-      <div className={`
+      <div className={` 
+        w-full
         // 水平方向のパディング
         px-4
         // md:スクリーンのサイズが768px以上のときに適用されるようにする

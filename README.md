@@ -1102,3 +1102,211 @@ const useBillboard = () => {
   }
 }
 ```
+
+componentsディレクトリに、Billboard.tsxファイルを作成
+```typescript:Billboard.tsx
+import useBillboard from "@/hooks/useBillboard";
+import React from "react";
+import { AiOutlineInfoCircle } from "react-icons/ai";
+
+const Billboard = () => {
+  // useBillboardでfetchしたデータをdataに入れる
+  const {data} = useBillboard()
+
+  return (
+    // vwはviewport width
+    <div className="relative h-[56.25vw]">
+      {/* webページにビデオコンテンツを埋め込むために使用 */}
+      <video
+        className="
+          w-full
+          h-[56.25vw]
+          object-cover
+          brightness-[80%]
+        "
+        autoPlay
+        muted
+        loop
+        poster={data?.thumbnailUrl}
+        src={data?.videoUrl}>
+        {/* // src="/movies/concat_movie.mp4"> */}
+      </video>
+      <div className="absolute top-[30%] md:top-[40%] ml-4 md:ml-16">
+          <p className="
+            text-white
+            text-xl
+            md:text-5xl
+            h-full
+            w-[50%]
+            lg:text-6xl
+            font-bold
+            drop-shadow-xl
+            // whitespace-nowrap
+          ">
+            {data?.title}
+          </p>
+          <p className="
+            text-white
+            text-[8px]
+            md:text-lg
+            mt-3
+            md:mt-8
+            w-[90%]
+            // 768px以上で適用
+            md:w-[80%]
+            // 1024px以上で適用
+            lg:w-[50%]
+            drop-shadow-xl
+            // whitespace-nowrap
+            break-words whitespace-pre-line
+          ">
+            {data?.description}
+          </p>
+          <div className="flex flex-row items-center mt-3 md:mt-4 gap-3">
+            <button className="
+              bg-white
+              text-white
+              bg-opacity-60
+              rounded-md
+              py-1 md:py-2
+              px-2 md:px-4
+              w-auto
+              text-xs lg:text-lg
+              font-semibold
+              flex
+              flex-row
+              items-center
+              hover:bg-opacity-20
+              transition
+            ">
+              <AiOutlineInfoCircle className="mr-2"/>
+              More Info
+            </button>
+          </div>
+      </div>
+    </div>
+  )
+}
+
+export default Billboard;
+```
+
+md:text-lgは、中程度のビューポート幅以上でテキストを大きくする。
+
+
+pages > api > movies 内に、index.tsを作成する。
+
+以下のテンプレはAPI作成によく使用するので書き留めておく。
+```ts:APIテンプレート
+import { NextApiRequest, NextApiResponse } from "next";
+import prismadb from '@/lib/prismadb';
+import serverAuth from "@/lib/serverAuth";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).end()
+  }
+  try {
+    await serverAuth(req)
+  } catch (error) {
+    console.log(error)
+    return res.status(400).end()
+  }
+}
+```
+
+```ts:index.ts
+import { NextApiRequest, NextApiResponse } from "next";
+import prismadb from '@/lib/prismadb';
+import serverAuth from "@/lib/serverAuth";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).end()
+  }
+  try {
+    await serverAuth(req)
+    const movies = prismadb.movie.findMany()
+    return res.status(200).json(movies)
+  } catch (error) {
+    console.log(error)
+    return res.status(400).end()
+  }
+}
+```
+
+**revalidateIfStale**
+false は、SWRが最初にマウントされたときに、キャッシュが古くなっていてもデータの再検証を行わないようにします。つまり、キャッシュにデータがあれば、それをそのまま使用し、新たなリクエストを送らないようにします。これはパフォーマンスを向上させるためや、不要なリクエストを減らすために有用です。
+**revalidateOnFocus**
+false は、ブラウザのタブにフォーカスが戻った時にデータの再検証を行わないようにします。通常、ユーザーがアプリケーションに戻った時にデータが最新であることを保証するために使用されますが、このオプションをfalseにするとその機能がオフになります。
+**revalidateOnReconnect**
+false は、ネットワークが再接続された時にデータの再検証を行わないようにします。インターネット接続が不安定な場合や、オフラインからオンラインに戻ったときに自動的にデータを更新するのを避けたい場合に便利です。
+
+
+hooksファイルの中に、useMovieList.tsを作成する。
+```ts:useMovieList.ts
+import useSWR from "swr";
+import fetcher from "@/lib/fetcher";
+
+const useMovieList = () => {
+  const {data, error, isLoading} = useSWR('/api/movies', fetcher, {
+    revalidateIfStale: false,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  })
+
+  return {
+    data,
+    error,
+    isLoading
+  }
+}
+
+export default useMovieList
+```
+
+ターミナルで以下のコマンドを実行
+```terminal:terminal
+npm install lodash
+
+npm install -D @types/lodash
+```
+
+componentsディレクトリ内に MovieList.tsxを作成する。
+```ts:MovieList.tsx
+import React from "react"
+import { isEmpty } from "lodash"
+
+interface MovieListProps {
+  data: Record<string, any>[]
+  title: string
+}
+
+const MovieList: React.FC<MovieListProps> = ({data, title}) => {
+  if (isEmpty(data)) {
+    return null
+  }
+
+  return (
+    <div className="px-4 md:px-12 mt-4 space-y-8">
+      <p className="text-white text-md md:text-xl lg:text-2xl font-semibold mb-4">
+        {title}
+      </p>
+      <div className="grid grid-cols-4 gap-2">
+        {data.map((movie) => (
+          <div key={movie.id}>
+            movie
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default MovieList
+```
+
+index.tsファイルを修正
+```ts
+const movies = await prismadb.movie.findMany()
+```
