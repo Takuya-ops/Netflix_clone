@@ -1307,6 +1307,298 @@ export default MovieList
 ```
 
 index.tsファイルを修正
-```ts
+```
 const movies = await prismadb.movie.findMany()
+```
+
+componentsディレクトリにMovieCard.tsxを作成
+```ts:MovieCard.tsx
+import React from "react"
+import { BsFillPlayFill } from "react-icons/bs"
+
+interface MovieCardProps {
+  data: Record<string, any>
+}
+
+const MovieCard: React.FC<MovieCardProps> = ({data}) => {
+  return (
+    <div className="
+      group 
+      bg-zinc-900
+      col-span 
+      relative 
+      h-[12vw]
+    ">
+      <img
+        className="
+          cursor-pointer
+          object-cover
+          transition
+          duration
+          shadow-xl
+          rounded-md
+          group-hover:opacity-90
+          sm:group-hover:opacity-10
+          delay-100
+          w-full
+          h-[12vw]
+        "
+        src={data.thumbnailUrl}
+      />
+      <div className="
+        opacity-0
+        absolute
+        top-0
+        transition
+        duration-200
+        z-10
+        invisible
+        sm:visible
+        delay-100
+        w-full
+        scale-0
+        group-hover:scale-110
+        group-hover:-translate-y-[6vw]
+        group-hover:translate-x-[2vw]
+        group-hover:opacity-100
+      ">
+        <img
+        className="
+          cursor-pointer
+          object-cover
+          transition
+          duration
+          shadow-xl
+          rounded-t-md
+          w-full
+          h-[12vw]
+        "
+        src={data.thumbnailUrl} alt="Thumbnail"/>
+        {/* サムネイル画像の下にスペースを確保 */}
+        <div className="
+          z-10
+          bg-zinc-800
+          p-2
+          lg:p-4
+          absolute
+          w-full
+          transition
+          shadow-md
+          rounded-b-md
+        ">
+          <div className="flex flex-row items-center gap-3">
+            <div className="
+              cursor-pointer
+              w-6
+              h-6
+              lg:w-10
+              lg:h-10
+              bg-white
+              rounded-full
+              flex
+              justify-center
+              items-center
+              transition
+              hover:bg-neutral-300
+            "
+            onClick={() => {}}
+            >
+              <BsFillPlayFill size={26}/>
+            </div>
+          </div>
+          <p className="text-green-400 font-semibold mt-4">
+            New <span className="text-white">2023</span>
+          </p>
+          <div className="flex flex-row mt-4 gap-2 items-center">
+            <p className="text-white text-[10px] lg:text-sm">{data.duration}</p>
+          </div>
+          <div className="flex flex-row mt-4 gap-2 items-center">
+            <p className="text-white text-[10px] lg:text-sm">{data.genre}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default MovieCard
+```
+
+apiディレクトリにfavorite.tsを作成する。
+```ts:favorite.ts
+import serverAuth from "@/lib/serverAuth";
+import { without } from "lodash";
+import { NextApiRequest, NextApiResponse } from "next";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    if (req.method == 'POST') {
+      const {currentUser} = await serverAuth(req)
+
+      const {movieId} = req.body
+
+      const existingMovie = await prismadb.movie.findUnique({
+        where: {
+          id: movieId
+        }
+      })
+      
+      if (!existingMovie) {
+        throw new Error('Invalid ID')
+      }
+
+      const user = await prismadb.user.update({
+        where: {
+          email: currentUser.email || '',
+        },
+        data: {
+          favoriteIds: {
+            push:movieId
+          }
+        }
+      })
+
+      return res.status(200).json(user);
+    }
+
+    if (req.method === 'DELETE') {
+      const {currentUser} = await serverAuth(req)
+      const {movieId} = req.body
+      const existingMovie = await prismadb.movie.findUnique({
+        where: {
+          id: movieId
+        }
+      })
+
+      if (!existingMovie) {
+        throw new Error('Invalid ID')
+      }
+
+      const updatedFavoriteIds = without(currentUser.favoriteIds, movieId);
+      
+      const updatedUser = await prismadb.user.update({ 
+        where: {
+          email: currentUser.email || '',
+        },
+        data: {
+          favoriteIds: updatedFavoriteIds
+        }
+      })
+      return res.status(200).json(updatedUser)
+    }
+    return res.status(405).end()
+  } catch (error) {
+    console.log(error)
+    return res.status(400).end
+  }
+}
+```
+
+apiディレクトリに、favorites.ts を作成する。
+```ts:favorites.ts
+import { NextApiRequest, NextApiResponse } from "next";
+import prismadb from  '@/lib/prismadb'
+import serverAuth from "@/lib/serverAuth";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).end()
+  }
+  
+  try {
+    const {currentUser} = await serverAuth(req)
+    const favoriteMovies = await prismadb.movie.findMany({
+      where: {
+        id: {
+          in: currentUser?.favoriteIds
+        }
+      }
+    });
+    return res.status(200).json(favoriteMovies)
+  } catch (error) {
+    console.log(error)
+    return res.status(400).end()
+  }
+}
+```
+
+hooksディレクトリ内に、useFavorites.tsを作成。
+```ts:useFavorites.ts
+import useSWR from "swr";
+import fetcher from "@/lib/fetcher";
+
+// mutateはデータを更新すること
+const useFavorites = () => {
+  const {
+    data,
+    error,
+    isLoading,
+    mutate
+  } = useSWR('/api/favorites', fetcher,{
+    revalidateIfStale: false,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false
+  })
+
+  return {
+    data,
+    error,
+    isLoading,
+    mutate
+  }
+}
+
+export default useFavorites
+```
+
+※ mutateはデータを更新すること
+
+componentsディレクトリにFavoriteButton.tsxを作成。
+```ts:FavoriteButton.tsx
+import axios from "axios";
+import { useCallback, useMemo } from "react";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import useFavorites from "@/hooks/useFavorites";
+import { AiOutlinePlus } from "react-icons/ai";
+
+interface FavoriteButtonProps {
+  movieId: string
+}
+
+const FavoriteButton: React.FC<FavoriteButtonProps> = ({movieId}) => {
+  return (
+    <div className="
+      cursor-pointer
+      group/item
+      w-6
+      h-6
+      lg:w-10
+      lg:h-10
+      border-white
+      border-2
+      rounded-full
+      // flex
+      // justify-center
+      // items-center
+      // transition
+      // hover:border-netural-300
+    ">
+      <AiOutlinePlus className="text-white size={24}" />
+    </div>
+  )
+}
+
+export default FavoriteButton
+```
+
+index.tsxに追記する
+```ts:index.tsx
+  const { data: favorite = []} = useFavorites();
+
+  <MovieList title="My List" data={movies}/>
+```
+
+FavoriteButton.tsxを編集する。
+```tsx:FavoriteButton.tsx
+
 ```
