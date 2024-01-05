@@ -13,13 +13,13 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({movieId}) => {
   const {data: currentUser, mutate} = useCurrentUser()
 
   const isFavorite = useMemo(() => {
-    const list = currentUser?.favoriteIds || []
+    const list = currentUser?.favoriteIds || [];
 
     return list.includes(movieId)
   }, [currentUser, movieId])
 
   const toggleFavorites = useCallback(async () => {
-    let response
+    let response;
 
     if (isFavorite) {
       response = await axios.delete('/api/favorite', {data: {movieId}})
@@ -36,7 +36,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({movieId}) => {
     mutateFavorites()
   },[movieId, isFavorite, currentUser, mutate, mutateFavorites])
 
-  const Icon = isFavorite ? AiOutlineCheck : AiOutlinePlus
+  const Icon = isFavorite ? AiOutlineCheck : AiOutlinePlus;
   // console.log(isFavorite)
   // const Icon = isFavorite ? AiOutlinePlus : AiOutlineCheck
 
@@ -53,11 +53,11 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({movieId}) => {
       border-white
       border-2
       rounded-full
-      // flex
-      // justify-center
-      // items-center
-      // transition
-      // hover:border-netural-300
+      flex
+      justify-center
+      items-center
+      transition
+      hover:border-netural-300
     ">
       <Icon className="text-white" size={24} />
     </div>
